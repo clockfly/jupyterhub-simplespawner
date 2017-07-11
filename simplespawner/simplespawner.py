@@ -1,6 +1,7 @@
 import os
 import sys
 from traitlets import Unicode
+import pwd
 
 
 from jupyterhub.spawner import LocalProcessSpawner
@@ -15,16 +16,27 @@ class SimpleLocalProcessSpawner(LocalProcessSpawner):
     provides absolutely no isolation between different users!
     """
 
-    home_path_template = Unicode(
-        '/tmp/{userid}',
+    work_directory_template = Unicode(
+        '{loginuser_home}/notebooks/{$username}',
         config=True,
-        help='Template to expand to set the user home. {userid} and {username} are expanded'
+        help="Template to expand to set the user's working directory. {userid} and {username} are expanded"
     )
 
+    
+    def loginuser(self):
+        return pwd.getpwuid(os.geteuid()).pw_name
+
+    def loginuser_home(self):
+        if self.loginuser == "root":
+            return "/root"
+        else:
+            return "/home/" + self.loginuser
+         
+
     @property
-    def home_path(self):
-        return self.home_path_template.format(
-            userid=self.user.id,
+    def work_directory_path(self):
+      return self.work_directory_template.format(
+            loginuser_home=self.loginuser_home,
             username=self.user.name
         )
 
@@ -35,17 +47,17 @@ class SimpleLocalProcessSpawner(LocalProcessSpawner):
         return env
 
     def make_preexec_fn(self, name):
-        home = self.home_path
+        workdir = self.work_directory_path
         def preexec():
             try:
-                os.makedirs(home, 0o755, exist_ok=True)
-                os.chdir(home)
+                os.makedirs(workdir, 0o755, exist_ok=True)
+                os.chdir(workdir)
             except e:
                 print(e)
         return preexec
 
     def user_env(self, env):
         env['USER'] = self.user.name
-        env['HOME'] = self.home_path
+        env['HOME'] = self.loginuser_home
         env['SHELL'] = '/bin/bash'
         return env
