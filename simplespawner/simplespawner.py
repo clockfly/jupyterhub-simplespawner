@@ -17,7 +17,7 @@ class SimpleLocalProcessSpawner(LocalProcessSpawner):
     """
 
     work_directory_template = Unicode(
-        '{loginuser_home}/notebooks/{$username}',
+        '{loginuser_home}/notebooks/{username}',
         config=True,
         help="Template to expand to set the user's working directory. {userid} and {username} are expanded"
     )
@@ -27,16 +27,15 @@ class SimpleLocalProcessSpawner(LocalProcessSpawner):
         return pwd.getpwuid(os.geteuid()).pw_name
 
     def loginuser_home(self):
-        if self.loginuser == "root":
+        if self.loginuser() == "root":
             return "/root"
         else:
-            return "/home/" + self.loginuser
+            return "/home/" + self.loginuser()
          
 
-    @property
     def work_directory_path(self):
       return self.work_directory_template.format(
-            loginuser_home=self.loginuser_home,
+            loginuser_home=self.loginuser_home(),
             username=self.user.name
         )
 
@@ -47,7 +46,7 @@ class SimpleLocalProcessSpawner(LocalProcessSpawner):
         return env
 
     def make_preexec_fn(self, name):
-        workdir = self.work_directory_path
+        workdir = self.work_directory_path()
         def preexec():
             try:
                 os.makedirs(workdir, 0o755, exist_ok=True)
@@ -56,8 +55,10 @@ class SimpleLocalProcessSpawner(LocalProcessSpawner):
                 print(e)
         return preexec
 
+
+
     def user_env(self, env):
         env['USER'] = self.user.name
-        env['HOME'] = self.loginuser_home
+        env['HOME'] = self.loginuser_home()
         env['SHELL'] = '/bin/bash'
         return env
