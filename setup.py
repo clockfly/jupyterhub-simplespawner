@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='jupyterhub-simplespawner',
-    version='0.1',
+    version='0.1-sean',
     description='Simple Local Process spawner for JupyterHub',
     url='https://github.com/yuvipanda/jupyterhub-simplespawner',
     author='Yuvi Panda',

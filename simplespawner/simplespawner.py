@@ -1,5 +1,7 @@
 import os
+import sys
 from traitlets import Unicode
+
 
 from jupyterhub.spawner import LocalProcessSpawner
 
@@ -25,6 +27,12 @@ class SimpleLocalProcessSpawner(LocalProcessSpawner):
             userid=self.user.id,
             username=self.user.name
         )
+
+    def get_env(self):
+        """Get the complete set of environment variables to be set in the spawned process."""
+        env = super().get_env()
+        env['PYTHONPATH'] = ":".join(sys.path)
+        return env
 
     def make_preexec_fn(self, name):
         home = self.home_path
