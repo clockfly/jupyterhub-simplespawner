@@ -22,6 +22,23 @@ class SimpleLocalProcessSpawner(LocalProcessSpawner):
         help="Template to expand to set the user's working directory. {userid} and {username} are expanded"
     )
 
+    env_keep = List([
+        'PATH',
+        'PYTHONPATH',
+        'CONDA_ROOT',
+        'CONDA_DEFAULT_ENV',
+        'VIRTUAL_ENV',
+        'LANG',
+        'LC_ALL',
+        'JUPYTERLAB_DIR',
+        ],
+        help="""
+        Whitelist of environment variables for the single-user server to inherit from the JupyterHub process.
+
+        This whitelist is used to ensure that sensitive information in the JupyterHub process's environment
+        (such as `CONFIGPROXY_AUTH_TOKEN`) is not passed to the single-user server's process.
+        """
+    ).tag(config=True)
     
     def loginuser(self):
         return pwd.getpwuid(os.geteuid()).pw_name
